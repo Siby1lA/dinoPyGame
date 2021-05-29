@@ -1,6 +1,5 @@
-import pygame
-import os
-import random
+import pygame, os, random, time
+
 
 #게임 초기화
 pygame.init()
@@ -10,11 +9,12 @@ SCREEN_HEIGHT = 600
 SCREEN_WIDTH = 1100
 SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-RUNNING = [pygame.image.load(os.path.join("Assets/Dino", "DinoRun1.png")),
-           pygame.image.load(os.path.join("Assets/Dino", "DinoRun2.png"))]
-JUMPING = pygame.image.load(os.path.join("Assets/Dino", "DinoJump.png"))
-DUCKING = [pygame.image.load(os.path.join("Assets/Dino", "DinoDuck1.png")),
-           pygame.image.load(os.path.join("Assets/Dino", "DinoDuck2.png"))]
+# 기본 캐릭터
+RUNNING = [pygame.image.load(os.path.join("Assets/Dino", "OvenRun1.png")),
+           pygame.image.load(os.path.join("Assets/Dino", "OvenRun2.png"))]
+JUMPING = pygame.image.load(os.path.join("Assets/Dino", "OvenJump.png"))
+DUCKING = [pygame.image.load(os.path.join("Assets/Dino", "OvenDuck1.png")),
+           pygame.image.load(os.path.join("Assets/Dino", "OvenDuck1.png"))]
 
 SMALL_CACTUS = [pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus1.png")),
                 pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus2.png")),
@@ -35,8 +35,8 @@ ITEM = [pygame.image.load(os.path.join("Assets/Item", "star.png")),
 
 # 공룡동작
 class Dinosaur:
-    X_POS = 80
-    Y_POS = 310
+    X_POS = 70
+    Y_POS = 290
     Y_POS_DUCK = 340
     JUMP_VEL = 8.5
     def __init__(self):
@@ -189,7 +189,7 @@ class GameItem(Item):
         super().__init__(image, self.type)
         self.rect.y = 120
     
-            
+
 
 def main():
     global game_speed, x_pos_bg, y_pos_bg, points, obstacles, items, count, immortal
@@ -326,5 +326,5 @@ def menu(death_count):
                 run = False
             if event.type == pygame.KEYDOWN:
                 main()
-
+            #캐릭터 변경 추가 예정
 menu(death_count=0)
