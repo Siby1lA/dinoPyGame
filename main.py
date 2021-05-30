@@ -5,20 +5,29 @@ import pygame, os, random, time
 pygame.init()
 
 # 초기설정
-SCREEN_HEIGHT = 600
-SCREEN_WIDTH = 1100
+SCREEN_HEIGHT = 370
+SCREEN_WIDTH = 910
 SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 # 기본 캐릭터
 RUNNING = [pygame.image.load(os.path.join("Assets/Dino", "OvenRun1.png")),
            pygame.image.load(os.path.join("Assets/Dino", "OvenRun2.png"))]
+
+ITEM_RUNNING =[pygame.image.load(os.path.join("Assets/Dino", "OvenRun1Item.png")),
+           pygame.image.load(os.path.join("Assets/Dino", "OvenRun2Item.png"))]
+
 JUMPING = pygame.image.load(os.path.join("Assets/Dino", "OvenJump.png"))
+ITEM_JUMPING = pygame.image.load(os.path.join("Assets/Dino", "OvenJumpItem.png"))
+
 DUCKING = [pygame.image.load(os.path.join("Assets/Dino", "OvenDuck1.png")),
            pygame.image.load(os.path.join("Assets/Dino", "OvenDuck1.png"))]
+ITEM_DUCKING = [pygame.image.load(os.path.join("Assets/Dino", "OvenDuck1Item.png")),
+           pygame.image.load(os.path.join("Assets/Dino", "OvenDuck1Item2.png"))]
+GAME_OVER = [pygame.image.load(os.path.join("Assets/Dino", "OvenOver.png"))]
 
 SMALL_CACTUS = [pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus1.png")),
-                pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus2.png")),
-                pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus3.png"))]
+                pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus2.png"))]
+
 LARGE_CACTUS = [pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus1.png")),
                 pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus2.png")),
                 pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus3.png"))]
@@ -29,6 +38,7 @@ BIRD = [pygame.image.load(os.path.join("Assets/Bird", "Bird1.png")),
 CLOUD = pygame.image.load(os.path.join("Assets/Other", "Cloud.png"))
 
 BG = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
+MENU_BG = pygame.image.load(os.path.join("Assets/Other", "menu.png"))
 
 ITEM = [pygame.image.load(os.path.join("Assets/Item", "star.png")),
         pygame.image.load(os.path.join("Assets/Item", "star2.png"))]
@@ -36,9 +46,9 @@ ITEM = [pygame.image.load(os.path.join("Assets/Item", "star.png")),
 # 공룡동작
 class Dinosaur:
     X_POS = 70
-    Y_POS = 290
-    Y_POS_DUCK = 340
-    JUMP_VEL = 8.5
+    Y_POS = 195
+    Y_POS_DUCK = 245
+    JUMP_VEL = 8.0
     def __init__(self):
         #이미지 대입
         self.duck_img = DUCKING
@@ -157,23 +167,23 @@ class Item(Object):
 class SmallCactus(Obstacle):
     def __init__(self, image):
         #선인장 타입 3개 랜덤
-        self.type = random.randint(0, 2)
+        self.type = random.randint(0, 1)
         super().__init__(image, self.type)
-        self.rect.y = 320
+        self.rect.y = 210
 
 class LargeCactus(Obstacle):
     def __init__(self, image):
         #선인장 타입 3개 랜덤
         self.type = random.randint(0, 2)
         super().__init__(image, self.type)
-        self.rect.y = 300
+        self.rect.y = 210
 
 
 class Bird(Obstacle):
     def __init__(self, image):
         self.type = 0
         super().__init__(image, self.type)
-        self.rect.y = 250
+        self.rect.y = 150
         self.index = 0
     
     #날갯짓 0~4는 윗날개 5~9는 아랫날게 10이되면 초기화
@@ -193,28 +203,33 @@ class GameItem(Item):
 
 def main():
     global game_speed, x_pos_bg, y_pos_bg, points, obstacles, items, count, immortal
+    immortal = 1
     run = True
     clock = pygame.time.Clock()
     player = Dinosaur()
     game_speed = 14
     cloud = Cloud()
     x_pos_bg = 0
-    y_pos_bg = 380
+    y_pos_bg = 0
     points = 0
     font = pygame.font.Font('freesansbold.ttf', 20)
     obstacles = []
     items = []
     death_count = 0
-    immortal = 1
     count = 0
 
     #무적 지속 시간
     def ImmotalCount():
         global count, immortal
         if immortal == 0:
-            pygame.draw.rect(SCREEN, (255, 0, 0), player.dino_rect, 2)
+            player.run_img = ITEM_RUNNING
+            player.jump_img = ITEM_JUMPING
+            player.duck_img = ITEM_DUCKING
             count += 1
             if count % 250 == 0:
+                player.run_img = RUNNING
+                player.jump_img = JUMPING
+                player.duck_img = DUCKING
                 immortal = 1
         
     def score():
@@ -223,9 +238,9 @@ def main():
         if points % 100 == 0:
             game_speed += 1
         # antialias True로 하면 폰트가 선명해진다. 
-        text = font.render("Points: " + str(points), True, (0, 0, 0))
+        text = font.render("Points: " + str(points), True, (255, 255, 255))
         textRect = text.get_rect()
-        textRect.center = (1000, 40)
+        textRect.center = (850, 25)
         SCREEN.blit(text, textRect)
 
     def background():
@@ -251,7 +266,7 @@ def main():
         SCREEN.fill((255, 255, 255))
         #사용자입력
         userInput = pygame.key.get_pressed()
-
+        background()
         
         player.draw(SCREEN)
         player.update(userInput)
@@ -286,8 +301,8 @@ def main():
                 immortal = 0
                 
 
-        #게임배경
-        background()
+        
+        
         #구름
         cloud.draw(SCREEN)
         cloud.update()
@@ -302,23 +317,25 @@ def main():
 def menu(death_count):
     global points
     run = True
+    chara = 0
     while run:
-        SCREEN.fill((255, 255, 255))
+        chara = RUNNING[0]
         font = pygame.font.Font('freesansbold.ttf', 30)
-
+        SCREEN.blit(MENU_BG, (0, 0))
         if death_count == 0:
-            text = font.render("Press any Key to Start.", True, (0, 0, 0))
+            text = font.render("->change", True, (255, 255, 255))
         elif death_count > 0:
-            text = font.render("Press any Key to Restart", True, (0, 0, 0))
-            score = font.render("Your Score : " + str(points), True, (0, 0, 0))
+            text = font.render("Press any Key to Restart", True, (255, 255, 255))
+            score = font.render("Your Score : " + str(points), True, (255, 255, 255))
+            chara = GAME_OVER[0]
             scoreRect = score.get_rect()
-            scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
+            scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 130)
             SCREEN.blit(score, scoreRect)
-
+        
         textRect = text.get_rect()
-        textRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+        textRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 150)
         SCREEN.blit(text, textRect)
-        SCREEN.blit(RUNNING[0], (SCREEN_WIDTH // 2 - 20, SCREEN_HEIGHT // 2 - 140))
+        SCREEN.blit(chara, (SCREEN_WIDTH // 2-50, SCREEN_HEIGHT // 2-40))
         pygame.display.update()
 
         for event in pygame.event.get():
