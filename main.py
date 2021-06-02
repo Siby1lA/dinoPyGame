@@ -9,20 +9,37 @@ SCREEN_HEIGHT = 370
 SCREEN_WIDTH = 910
 SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-# 기본 캐릭터
+# 캐릭터 모션
 RUNNING = [pygame.image.load(os.path.join("Assets/Dino", "OvenRun1.png")),
            pygame.image.load(os.path.join("Assets/Dino", "OvenRun2.png"))]
 
+RUNNING2 = [pygame.image.load(os.path.join("Assets/Dino", "KingRun1.png")),
+           pygame.image.load(os.path.join("Assets/Dino", "KingRun2.png"))]
+
 ITEM_RUNNING =[pygame.image.load(os.path.join("Assets/Dino", "OvenRun1Item.png")),
            pygame.image.load(os.path.join("Assets/Dino", "OvenRun2Item.png"))]
+ITEM_RUNNING2 =[pygame.image.load(os.path.join("Assets/Dino", "KingRun1Item.png")),
+           pygame.image.load(os.path.join("Assets/Dino", "KingRun2Item.png"))]
 
 JUMPING = pygame.image.load(os.path.join("Assets/Dino", "OvenJump.png"))
+
+JUMPING2 = pygame.image.load(os.path.join("Assets/Dino", "KingJump.png"))
+
 ITEM_JUMPING = pygame.image.load(os.path.join("Assets/Dino", "OvenJumpItem.png"))
+ITEM_JUMPING2 = pygame.image.load(os.path.join("Assets/Dino", "KingJumpItem.png"))
 
 DUCKING = [pygame.image.load(os.path.join("Assets/Dino", "OvenDuck1.png")),
            pygame.image.load(os.path.join("Assets/Dino", "OvenDuck1.png"))]
+
+DUCKING2 = [pygame.image.load(os.path.join("Assets/Dino", "KingDuck1.png")),
+           pygame.image.load(os.path.join("Assets/Dino", "KingDuck2.png"))]
+
 ITEM_DUCKING = [pygame.image.load(os.path.join("Assets/Dino", "OvenDuck1Item.png")),
-           pygame.image.load(os.path.join("Assets/Dino", "OvenDuck1Item2.png"))]
+           pygame.image.load(os.path.join("Assets/Dino", "OvenDuck1Item.png"))]
+
+ITEM_DUCKING2 = [pygame.image.load(os.path.join("Assets/Dino", "KingDuck1Item.png")),
+           pygame.image.load(os.path.join("Assets/Dino", "KingDuck2Item.png"))]
+
 GAME_OVER = [pygame.image.load(os.path.join("Assets/Dino", "OvenOver.png"))]
 
 SMALL_CACTUS = [pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus1.png")),
@@ -39,22 +56,35 @@ CLOUD = pygame.image.load(os.path.join("Assets/Other", "Cloud.png"))
 
 BG = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
 MENU_BG = pygame.image.load(os.path.join("Assets/Other", "menu.png"))
+MENU_CHARA = [pygame.image.load(os.path.join("Assets/Dino", "menuChara1.png")),
+            pygame.image.load(os.path.join("Assets/Dino", "menuChara2.png"))]
 
-ITEM = [pygame.image.load(os.path.join("Assets/Item", "star.png")),
-        pygame.image.load(os.path.join("Assets/Item", "star2.png"))]
+ITEM = [pygame.image.load(os.path.join("Assets/Item", "star.png"))]
 
+START_BTN = pygame.image.load(os.path.join("Assets/Other", "start.png"))
+
+CHANGE_BTN = [pygame.image.load(os.path.join("Assets/Other", "btn_l.png")),
+            pygame.image.load(os.path.join("Assets/Other", "btn_r.png"))]
+CHARA_CHANGE = 0
+CHANGE = []
 # 공룡동작
+
 class Dinosaur:
     X_POS = 70
     Y_POS = 195
     Y_POS_DUCK = 245
     JUMP_VEL = 8.0
+    
     def __init__(self):
         #이미지 대입
-        self.duck_img = DUCKING
-        self.run_img = RUNNING
-        self.jump_img = JUMPING
-
+        if CHARA_CHANGE:
+            CHANGE = [DUCKING2, RUNNING2, JUMPING2]
+        else:
+            CHANGE = [DUCKING, RUNNING, JUMPING]
+        self.duck_img = CHANGE[0]
+        self.run_img = CHANGE[1]
+        self.jump_img = CHANGE[2]
+        
         self.dino_duck = False
         self.dino_run = True
         self.dino_jump = False
@@ -195,7 +225,7 @@ class Bird(Obstacle):
 
 class GameItem(Item):
     def __init__(self, image):
-        self.type = random.randint(0, 1)
+        self.type = 0
         super().__init__(image, self.type)
         self.rect.y = 120
     
@@ -221,22 +251,29 @@ def main():
     #무적 지속 시간
     def ImmotalCount():
         global count, immortal
+        changeItem = []
+        change = []
+        if CHARA_CHANGE:
+            changeItem = [ITEM_RUNNING2, ITEM_JUMPING2, ITEM_DUCKING2]
+            change = [RUNNING2, JUMPING2, DUCKING2]
+        else:
+            changeItem = [ITEM_RUNNING, ITEM_JUMPING, ITEM_DUCKING]
+            change = [RUNNING, JUMPING, DUCKING]
+
         if immortal == 0:
-            player.run_img = ITEM_RUNNING
-            player.jump_img = ITEM_JUMPING
-            player.duck_img = ITEM_DUCKING
+            player.run_img = changeItem[0]
+            player.jump_img = changeItem[1]
+            player.duck_img = changeItem[2]
             count += 1
-            if count % 250 == 0:
-                player.run_img = RUNNING
-                player.jump_img = JUMPING
-                player.duck_img = DUCKING
+            if count % 200 == 0:
+                player.run_img = change[0]
+                player.jump_img = change[1]
+                player.duck_img = change[2]
                 immortal = 1
-        
+
     def score():
-        global points, game_speed
+        global points
         points += 1
-        if points % 100 == 0:
-            game_speed += 1
         # antialias True로 하면 폰트가 선명해진다. 
         text = font.render("Points: " + str(points), True, (255, 255, 255))
         textRect = text.get_rect()
@@ -262,6 +299,7 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
+            
         
         SCREEN.fill((255, 255, 255))
         #사용자입력
@@ -301,8 +339,6 @@ def main():
                 immortal = 0
                 
 
-        
-        
         #구름
         cloud.draw(SCREEN)
         cloud.update()
@@ -312,36 +348,58 @@ def main():
         clock.tick(30)
         pygame.display.update()
 
-
-
 def menu(death_count):
     global points
     run = True
     chara = 0
+    
+
     while run:
+        global CHARA_CHANGE
         chara = RUNNING[0]
         font = pygame.font.Font('freesansbold.ttf', 30)
+
         SCREEN.blit(MENU_BG, (0, 0))
-        if death_count == 0:
-            text = font.render("->change", True, (255, 255, 255))
-        elif death_count > 0:
-            text = font.render("Press any Key to Restart", True, (255, 255, 255))
+        
+        if CHARA_CHANGE:
+            chara = MENU_CHARA[1]
+        else:
+            chara = MENU_CHARA[0]
+
+        if death_count > 0:
             score = font.render("Your Score : " + str(points), True, (255, 255, 255))
-            chara = GAME_OVER[0]
             scoreRect = score.get_rect()
             scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 130)
             SCREEN.blit(score, scoreRect)
+            
+
+        #마스크 스타트 이미지버튼 충돌 감지
+        START_BTN_event = pygame.mask.from_surface(START_BTN)
         
-        textRect = text.get_rect()
-        textRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 150)
-        SCREEN.blit(text, textRect)
-        SCREEN.blit(chara, (SCREEN_WIDTH // 2-50, SCREEN_HEIGHT // 2-40))
+        START_BTN_pos = SCREEN_WIDTH // 2+250, SCREEN_HEIGHT // 2+50
+        CHANGE_BTN_pos_l = SCREEN_WIDTH // 2-170, SCREEN_HEIGHT // 2-100
+        CHANGE_BTN_pos_r = SCREEN_WIDTH // 2+50, SCREEN_HEIGHT // 2-100
+
+        SCREEN.blit(START_BTN, START_BTN_pos)
+        SCREEN.blit(CHANGE_BTN[0], CHANGE_BTN_pos_l)
+        SCREEN.blit(CHANGE_BTN[1], CHANGE_BTN_pos_r)
+        SCREEN.blit(chara, (SCREEN_WIDTH // 2-60, SCREEN_HEIGHT // 2-40))
         pygame.display.update()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
-            if event.type == pygame.KEYDOWN:
-                main()
-            #캐릭터 변경 추가 예정
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                try:
+                    if START_BTN_event.get_at((event.pos[0]-START_BTN_pos[0], event.pos[1]-START_BTN_pos[1])):
+                        main()
+                except IndexError:
+                    pass
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    CHARA_CHANGE = 1
+                elif event.key == pygame.K_RIGHT:
+                    CHARA_CHANGE = 0
+                elif event.key == pygame.K_UP:
+                    main()
 menu(death_count=0)
