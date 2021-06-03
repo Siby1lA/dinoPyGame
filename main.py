@@ -53,11 +53,14 @@ BIRD = [pygame.image.load(os.path.join("Assets/Bird", "Bird1.png")),
 CLOUD = pygame.image.load(os.path.join("Assets/Other", "Cloud.png"))
 
 BG = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
+ITEM_BG = pygame.image.load(os.path.join("Assets/Other", "Track2.png"))
+
 MENU_BG = pygame.image.load(os.path.join("Assets/Other", "menu.png"))
 MENU_CHARA = [pygame.image.load(os.path.join("Assets/Dino", "menuChara1.png")),
             pygame.image.load(os.path.join("Assets/Dino", "menuChara2.png"))]
 
-ITEM = [pygame.image.load(os.path.join("Assets/Item", "star.png"))]
+ITEM = [pygame.image.load(os.path.join("Assets/Item", "star.png")),
+        pygame.image.load(os.path.join("Assets/Item", "drug.png"))]
 
 START_BTN = pygame.image.load(os.path.join("Assets/Other", "start.png"))
 END_BTN = pygame.image.load(os.path.join("Assets/Other", "end.png"))
@@ -66,9 +69,12 @@ CHANGE_BTN = [pygame.image.load(os.path.join("Assets/Other", "btn_l.png")),
             pygame.image.load(os.path.join("Assets/Other", "btn_r.png"))]
 CHARA_CHANGE = 0
 
+HEART = pygame.image.load(os.path.join("Assets/Item", "heart.png"))
+item_hit = False
+item2 = False
 #사운드
 JUMP_SOUND = pygame.mixer.Sound('Assets/Sounds/jump.ogg')
-
+ITEM_SOUND = pygame.mixer.Sound('Assets/Sounds/item.ogg')
 # 공룡동작
 class Dinosaur:
     X_POS = 70
@@ -160,7 +166,7 @@ class Dinosaur:
         SCREEN.blit(self.image, (self.dino_rect.x, self.dino_rect.y))
 
 #구름
-class Cloud:
+'''class Cloud:
     def __init__(self):
         self.x = SCREEN_WIDTH + random.randint(800, 1000)
         self.y = random.randint(50, 100)
@@ -175,6 +181,7 @@ class Cloud:
 
     def draw(self, SCREEN):
         SCREEN.blit(self.image, (self.x, self.y))
+'''
 #장애물, 아이템  부모 클래스 이미지 설정, 이동
 class Object:
     def __init__(self, image, type):
@@ -190,15 +197,7 @@ class Obstacle(Object):
         self.rect.x -= game_speed
         if self.rect.x < -self.rect.width:
             obstacles.pop()
-#아이템
-class Item(Object):
-
-    def update(self):
-        self.rect.x -= game_speed
-        if self.rect.x < -self.rect.width:
-            items.pop()
-
-
+        
 # 선인장 장애물, 부모인 Ob를 상속받음
 class SmallCactus(Obstacle):
     def __init__(self, image):
@@ -214,12 +213,11 @@ class LargeCactus(Obstacle):
         super().__init__(image, self.type)
         self.rect.y = 210
 
-
 class Bird(Obstacle):
     def __init__(self, image):
         self.type = 0
         super().__init__(image, self.type)
-        self.rect.y = 150
+        self.rect.y = random.randint(100, 150)
         self.index = 0
     
     #날갯짓 0~4는 윗날개 5~9는 아랫날게 10이되면 초기화
@@ -228,12 +226,40 @@ class Bird(Obstacle):
             self.index = 0
         SCREEN.blit(self.imgae[self.index // 5], self.rect)
         self.index += 1
-
+#아이템
+class Item():
+    def __init__(self, image, type):
+        self.imgae = image
+        self.type = type
+        self.rect = self.imgae[self.type].get_rect()
+        self.rect.x = SCREEN_WIDTH
+    def draw(self, SCREEN):
+        #아이템 히트가 아닐시 그림, 즉 히트하면 안그리기에 사라짐
+        if not item_hit:
+            SCREEN.blit(self.imgae[self.type], self.rect)
+            
+    def update(self):
+        global item_hit
+        self.rect.x -= game_speed
+        if self.rect.x < -self.rect.width:
+            #화면에서 사라지면 삭제 및 아이템 생성
+            if len(items) > 0:
+                items.pop()
+            item_hit = False
+#무적아이템 이미지 그리기
 class GameItem(Item):
     def __init__(self, image):
         self.type = 0
         super().__init__(image, self.type)
         self.rect.y = 120
+
+#마약 아이템
+class GameItem2(Item):
+    def __init__(self, image):
+        self.type = 1
+        super().__init__(image, self.type)
+        self.rect.y = 30
+
 #버튼 클릭 이벤트 클래스
 class Button:
     def __init__(self, img_in, x, y, width, height, action = None):
@@ -264,21 +290,24 @@ def main():
     pygame.mixer.music.set_volume(0.1)
     pygame.mixer.music.play()
     #게임배경음 넣을 곳
-    global game_speed, x_pos_bg, y_pos_bg, points, obstacles, items, count, immortal
+    global game_speed, x_pos_bg, y_pos_bg, points, obstacles, items, count, immortal, item_hit, hearts, hit
     immortal = 1
     run = True
     clock = pygame.time.Clock()
     player = Dinosaur()
     game_speed = 14
-    cloud = Cloud()
+    #cloud = Cloud()
     x_pos_bg = 0
     y_pos_bg = 0
     points = 0
+    hearts = 3
     font = pygame.font.Font('freesansbold.ttf', 20)
     obstacles = []
     items = []
+    items2 = []
     death_count = 0
     count = 0
+    hit = 1
 
     #무적 지속 시간
     def ImmotalCount():
@@ -302,6 +331,13 @@ def main():
                 player.jump_img = change[1]
                 player.duck_img = change[2]
                 immortal = 1
+    
+    def damage():
+        global count, hit
+        if hit == 0:
+            count += 1
+            if count % 50 == 0:
+                hit = 1
 
     def score():
         global points
@@ -312,17 +348,25 @@ def main():
         textRect.center = (850, 25)
         SCREEN.blit(text, textRect)
 
-    def background():
+    def heart():
+        global hearts, immortal
+        text = font.render("* " + str(hearts), True, (255, 0, 0))
+        textRect = text.get_rect()
+        textRect.center = (880, 60)
+        SCREEN.blit(text, textRect)
+        SCREEN.blit(HEART, (820, 40))
+        
+    def background(image):
         global x_pos_bg, y_pos_bg
-        image_width = BG.get_width()
+        image_width = image.get_width()
         #백그라운드 그림
-        SCREEN.blit(BG, (x_pos_bg, y_pos_bg))
+        SCREEN.blit(image, (x_pos_bg, y_pos_bg))
         #실시간으로 변화되는 배경 적용
-        SCREEN.blit(BG, (image_width + x_pos_bg, y_pos_bg))
+        SCREEN.blit(image, (image_width + x_pos_bg, y_pos_bg))
        
        #bg가 x축으로 다 돌면 원상복귀
         if x_pos_bg <= -image_width:
-            SCREEN.blit(BG, (image_width + x_pos_bg, y_pos_bg))
+            SCREEN.blit(image, (image_width + x_pos_bg, y_pos_bg))
             x_pos_bg = 0
         # -14로 x측을 계속 뺀다.
         x_pos_bg -= game_speed
@@ -334,11 +378,12 @@ def main():
         SCREEN.fill((255, 255, 255))
         #사용자입력
         userInput = pygame.key.get_pressed()
-        background()
+        background(BG)
         
         player.draw(SCREEN)
         player.update(userInput)
 
+        #1로 바꾸면 안뜸
         if len(obstacles) == 0:
             if random.randint(0, 2) == 0:
                 obstacles.append(SmallCactus(SMALL_CACTUS))
@@ -351,28 +396,50 @@ def main():
             obstacle.draw(SCREEN)
             obstacle.update()
             if player.dino_rect.colliderect(obstacle.rect):
-                if immortal:
+                # 무적아이템과 데미지 입었을때 무적이 되어야하기에 and
+                if immortal and hit:
                     pygame.time.delay(300)
-                    death_count += 1
-                    menu(death_count)
+                    hit = 0
+                    hearts -= 1
+                    if hearts == 0:
+                        death_count += 1
+                        menu(death_count)
 
         # 아이템
-        if len(items) == 0:
+        if len(items) == 0 or len(items2) == 0:
             #아이템 드랍률
-            if random.randint(0, 200) == 0:
+            if random.randint(0, 300) == 0:
                 items.append(GameItem(ITEM))
+            if random.randint(0, 1000) == 0:
+                items2.append(GameItem2(ITEM))
 
         for item in items:
             item.draw(SCREEN)
             item.update()
             if player.dino_rect.colliderect(item.rect):
                 immortal = 0
+                item_hit = True
+                ITEM_SOUND.play()
+                #아이템사진없애는기능
+        #마약 아이템
+        for item in items2:
+            item.draw(SCREEN)
+            item.update()
+            if player.dino_rect.colliderect(item.rect):
+                item_hit = True
+                background(ITEM_BG)
+                ITEM_SOUND.play()
+                player.draw(SCREEN)
+                pygame.time.delay(300)
+                death_count += 1
                 
 
         #구름
-        cloud.draw(SCREEN)
-        cloud.update()
+        '''cloud.draw(SCREEN)
+        cloud.update()'''
         score()
+        heart()
+        damage()
         ImmotalCount()
         #프레임 설정
         clock.tick(30)
