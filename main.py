@@ -1,7 +1,7 @@
 import pygame, os, random, time
 #게임 초기화
 pygame.init()
-
+pygame.mixer.init()
 # 초기설정
 SCREEN_HEIGHT = 370
 SCREEN_WIDTH = 910
@@ -65,9 +65,11 @@ END_BTN = pygame.image.load(os.path.join("Assets/Other", "end.png"))
 CHANGE_BTN = [pygame.image.load(os.path.join("Assets/Other", "btn_l.png")),
             pygame.image.load(os.path.join("Assets/Other", "btn_r.png"))]
 CHARA_CHANGE = 0
-CHANGE = []
-# 공룡동작
 
+#사운드
+JUMP_SOUND = pygame.mixer.Sound('Assets/Sounds/jump.ogg')
+
+# 공룡동작
 class Dinosaur:
     X_POS = 70
     Y_POS = 195
@@ -104,7 +106,7 @@ class Dinosaur:
             self.run()
         if self.dino_jump:
             self.jump()
-        
+            
         # 스텝이 10이 넘어가면 //5로 인해 0 or 1를 넘어가므로 0으로 다시 초기화
         if self.step_index >= 10:
             self.step_index = 0
@@ -113,12 +115,14 @@ class Dinosaur:
             self.dino_duck = False
             self.dino_run = False
             self.dino_jump = True
+            JUMP_SOUND.play()
+            
         #덕킹
         elif userInput[pygame.K_DOWN] and not self.dino_jump:
             self.dino_duck = True
             self.dino_run = False
             self.dino_jump = False
-        #다른키 입력해도 달림
+            
         elif not (self.dino_jump or userInput[pygame.K_DOWN]):
             self.dino_duck = False
             self.dino_run = True
@@ -130,7 +134,7 @@ class Dinosaur:
         self.dino_rect.x = self.X_POS
         self.dino_rect.y = self.Y_POS_DUCK
         self.step_index += 1
-   
+        
     def run(self):
             #달리는 이미지 가변
         self.image = self.run_img[self.step_index // 5]
@@ -149,9 +153,12 @@ class Dinosaur:
             self.dino_jump = False
             #초기화
             self.jump_vel = self.JUMP_VEL
-
+        
+        
+            
     def draw(self, SCREEN):
         SCREEN.blit(self.image, (self.dino_rect.x, self.dino_rect.y))
+
 #구름
 class Cloud:
     def __init__(self):
@@ -252,6 +259,11 @@ def EndBtn():
     quit()
 
 def main():
+    pygame.mixer.music.stop()
+    pygame.mixer.music.load('Assets/Sounds/main.ogg')
+    pygame.mixer.music.set_volume(0.1)
+    pygame.mixer.music.play()
+    #게임배경음 넣을 곳
     global game_speed, x_pos_bg, y_pos_bg, points, obstacles, items, count, immortal
     immortal = 1
     run = True
@@ -370,8 +382,13 @@ def menu(death_count):
     global points
     menu = True
     chara = 0
-
+    pygame.mixer.music.stop()
+    pygame.mixer.music.load('Assets/Sounds/lobby.ogg')
+    pygame.mixer.music.set_volume(0.1)
+    pygame.mixer.music.play()
+    
     while menu:
+        
         global CHARA_CHANGE
         chara = RUNNING[0]
         font = pygame.font.Font('freesansbold.ttf', 30)
@@ -382,13 +399,13 @@ def menu(death_count):
             chara = MENU_CHARA[1]
         else:
             chara = MENU_CHARA[0]
-
+        
         if death_count > 0:
             score = font.render("Your Score : " + str(points), True, (255, 255, 255))
             scoreRect = score.get_rect()
             scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 130)
             SCREEN.blit(score, scoreRect)
-    
+        
         
         SCREEN.blit(chara, (SCREEN_WIDTH // 2-60, SCREEN_HEIGHT // 2-40))
 
@@ -396,6 +413,7 @@ def menu(death_count):
         Button(CHANGE_BTN[1],SCREEN_WIDTH // 2+50,SCREEN_HEIGHT // 2-100, 177,88,CharaChangeBtn)
         Button(END_BTN,SCREEN_WIDTH // 2-370,SCREEN_HEIGHT // 2+50, 137,78,EndBtn)
         Button(START_BTN,SCREEN_WIDTH // 2+250,SCREEN_HEIGHT // 2+50, 137,78,StartBtn)
+        
         pygame.display.update()
         
         for event in pygame.event.get():
