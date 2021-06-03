@@ -1,6 +1,4 @@
 import pygame, os, random, time
-
-
 #게임 초기화
 pygame.init()
 
@@ -8,7 +6,7 @@ pygame.init()
 SCREEN_HEIGHT = 370
 SCREEN_WIDTH = 910
 SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-
+pygame.display.set_caption('쿠키런')
 # 캐릭터 모션
 RUNNING = [pygame.image.load(os.path.join("Assets/Dino", "OvenRun1.png")),
            pygame.image.load(os.path.join("Assets/Dino", "OvenRun2.png"))]
@@ -62,6 +60,7 @@ MENU_CHARA = [pygame.image.load(os.path.join("Assets/Dino", "menuChara1.png")),
 ITEM = [pygame.image.load(os.path.join("Assets/Item", "star.png"))]
 
 START_BTN = pygame.image.load(os.path.join("Assets/Other", "start.png"))
+END_BTN = pygame.image.load(os.path.join("Assets/Other", "end.png"))
 
 CHANGE_BTN = [pygame.image.load(os.path.join("Assets/Other", "btn_l.png")),
             pygame.image.load(os.path.join("Assets/Other", "btn_r.png"))]
@@ -228,8 +227,29 @@ class GameItem(Item):
         self.type = 0
         super().__init__(image, self.type)
         self.rect.y = 120
-    
+#버튼 클릭 이벤트 클래스
+class Button:
+    def __init__(self, img_in, x, y, width, height, action = None):
+        mouse = pygame.mouse.get_pos()
+        click = pygame.mouse.get_pressed()
+        SCREEN.blit(img_in,(x,y))
+        if x + width > mouse[0] > x and y + height > mouse[1] > y:
+            if click[0] and action != None:
+                time.sleep(0.5)
+                action()
 
+def CharaChangeBtn():
+    global CHARA_CHANGE
+    if CHARA_CHANGE == 0:
+        CHARA_CHANGE = 1
+    else:
+        CHARA_CHANGE = 0
+
+def StartBtn():
+    main()
+    
+def EndBtn():
+    quit()
 
 def main():
     global game_speed, x_pos_bg, y_pos_bg, points, obstacles, items, count, immortal
@@ -299,8 +319,6 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
-            
-        
         SCREEN.fill((255, 255, 255))
         #사용자입력
         userInput = pygame.key.get_pressed()
@@ -350,11 +368,10 @@ def main():
 
 def menu(death_count):
     global points
-    run = True
+    menu = True
     chara = 0
-    
 
-    while run:
+    while menu:
         global CHARA_CHANGE
         chara = RUNNING[0]
         font = pygame.font.Font('freesansbold.ttf', 30)
@@ -371,31 +388,21 @@ def menu(death_count):
             scoreRect = score.get_rect()
             scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 130)
             SCREEN.blit(score, scoreRect)
-            
-
-        #마스크 스타트 이미지버튼 충돌 감지
-        START_BTN_event = pygame.mask.from_surface(START_BTN)
+    
         
-        START_BTN_pos = SCREEN_WIDTH // 2+250, SCREEN_HEIGHT // 2+50
-        CHANGE_BTN_pos_l = SCREEN_WIDTH // 2-170, SCREEN_HEIGHT // 2-100
-        CHANGE_BTN_pos_r = SCREEN_WIDTH // 2+50, SCREEN_HEIGHT // 2-100
-
-        SCREEN.blit(START_BTN, START_BTN_pos)
-        SCREEN.blit(CHANGE_BTN[0], CHANGE_BTN_pos_l)
-        SCREEN.blit(CHANGE_BTN[1], CHANGE_BTN_pos_r)
         SCREEN.blit(chara, (SCREEN_WIDTH // 2-60, SCREEN_HEIGHT // 2-40))
-        pygame.display.update()
 
+        Button(CHANGE_BTN[0],SCREEN_WIDTH // 2-170,SCREEN_HEIGHT // 2-100, 177,88,CharaChangeBtn)
+        Button(CHANGE_BTN[1],SCREEN_WIDTH // 2+50,SCREEN_HEIGHT // 2-100, 177,88,CharaChangeBtn)
+        Button(END_BTN,SCREEN_WIDTH // 2-370,SCREEN_HEIGHT // 2+50, 137,78,EndBtn)
+        Button(START_BTN,SCREEN_WIDTH // 2+250,SCREEN_HEIGHT // 2+50, 137,78,StartBtn)
+        pygame.display.update()
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                run = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                try:
-                    if START_BTN_event.get_at((event.pos[0]-START_BTN_pos[0], event.pos[1]-START_BTN_pos[1])):
-                        main()
-                except IndexError:
-                    pass
-            elif event.type == pygame.KEYDOWN:
+                menu = False
+                EndBtn()
+            if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     CHARA_CHANGE = 1
                 elif event.key == pygame.K_RIGHT:
