@@ -67,6 +67,7 @@ END_BTN = pygame.image.load(os.path.join("Assets/Other", "end.png"))
 
 CHANGE_BTN = [pygame.image.load(os.path.join("Assets/Other", "btn_l.png")),
             pygame.image.load(os.path.join("Assets/Other", "btn_r.png"))]
+
 CHARA_CHANGE = 0
 
 HEART = pygame.image.load(os.path.join("Assets/Item", "heart.png"))
@@ -88,6 +89,7 @@ class Dinosaur:
             CHANGE = [DUCKING2, RUNNING2, JUMPING2]
         else:
             CHANGE = [DUCKING, RUNNING, JUMPING]
+
         self.duck_img = CHANGE[0]
         self.run_img = CHANGE[1]
         self.jump_img = CHANGE[2]
@@ -189,6 +191,7 @@ class Object:
         self.type = type
         self.rect = self.imgae[self.type].get_rect()
         self.rect.x = SCREEN_WIDTH
+
     def draw(self, SCREEN):
         SCREEN.blit(self.imgae[self.type], self.rect)
 #장애물
@@ -227,14 +230,10 @@ class Bird(Obstacle):
         SCREEN.blit(self.imgae[self.index // 5], self.rect)
         self.index += 1
 #아이템
-class Item():
-    def __init__(self, image, type):
-        self.imgae = image
-        self.type = type
-        self.rect = self.imgae[self.type].get_rect()
-        self.rect.x = SCREEN_WIDTH
+class Item(Object):
+    
     def draw(self, SCREEN):
-        #아이템 히트가 아닐시 그림, 즉 히트하면 안그리기에 사라짐
+        #아이템 먹으면 이미지 제거
         if not item_hit:
             SCREEN.blit(self.imgae[self.type], self.rect)
             
@@ -246,6 +245,7 @@ class Item():
             if len(items) > 0:
                 items.pop()
             item_hit = False
+
 #무적아이템 이미지 그리기
 class GameItem(Item):
     def __init__(self, image):
@@ -349,7 +349,7 @@ def main():
         SCREEN.blit(text, textRect)
 
     def heart():
-        global hearts, immortal
+        global hearts
         text = font.render("* " + str(hearts), True, (255, 0, 0))
         textRect = text.get_rect()
         textRect.center = (880, 60)
@@ -420,7 +420,8 @@ def main():
                 immortal = 0
                 item_hit = True
                 ITEM_SOUND.play()
-                #아이템사진없애는기능
+                
+
         #마약 아이템
         for item in items2:
             item.draw(SCREEN)
@@ -431,12 +432,7 @@ def main():
                 ITEM_SOUND.play()
                 player.draw(SCREEN)
                 pygame.time.delay(300)
-                death_count += 1
                 
-
-        #구름
-        '''cloud.draw(SCREEN)
-        cloud.update()'''
         score()
         heart()
         damage()
@@ -476,7 +472,8 @@ def menu(death_count):
         
         SCREEN.blit(chara, (SCREEN_WIDTH // 2-60, SCREEN_HEIGHT // 2-40))
 
-        Button(CHANGE_BTN[0],SCREEN_WIDTH // 2-170,SCREEN_HEIGHT // 2-100, 177,88,CharaChangeBtn)
+        Button(CHANGE_BTN[0], SCREEN_WIDTH // 2-170, SCREEN_HEIGHT // 2-100, 177,88, CharaChangeBtn)
+
         Button(CHANGE_BTN[1],SCREEN_WIDTH // 2+50,SCREEN_HEIGHT // 2-100, 177,88,CharaChangeBtn)
         Button(END_BTN,SCREEN_WIDTH // 2-370,SCREEN_HEIGHT // 2+50, 137,78,EndBtn)
         Button(START_BTN,SCREEN_WIDTH // 2+250,SCREEN_HEIGHT // 2+50, 137,78,StartBtn)
@@ -494,4 +491,5 @@ def menu(death_count):
                     CHARA_CHANGE = 0
                 elif event.key == pygame.K_UP:
                     main()
+
 menu(death_count=0)
