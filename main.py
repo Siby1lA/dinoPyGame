@@ -39,7 +39,7 @@ ITEM_DUCKING2 = [pygame.image.load(os.path.join("Assets/Dino", "KingDuck1Item.pn
            pygame.image.load(os.path.join("Assets/Dino", "KingDuck2Item.png"))]
 
 GAME_OVER = [pygame.image.load(os.path.join("Assets/Dino", "OvenOver.png"))]
-
+#장애물
 SMALL_CACTUS = [pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus1.png")),
                 pygame.image.load(os.path.join("Assets/Cactus", "SmallCactus2.png"))]
 
@@ -50,7 +50,8 @@ LARGE_CACTUS = [pygame.image.load(os.path.join("Assets/Cactus", "LargeCactus1.pn
 BIRD = [pygame.image.load(os.path.join("Assets/Bird", "Bird1.png")),
         pygame.image.load(os.path.join("Assets/Bird", "Bird2.png"))]
 
-CLOUD = pygame.image.load(os.path.join("Assets/Other", "Cloud.png"))
+TOP_CACTUS = [pygame.image.load(os.path.join("Assets/Cactus", "TopCactus1.png")),
+                pygame.image.load(os.path.join("Assets/Cactus", "TopCactus2.png"))]
 
 BG = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
 ITEM_BG = pygame.image.load(os.path.join("Assets/Other", "Track2.png"))
@@ -204,7 +205,7 @@ class Obstacle(Object):
 # 선인장 장애물, 부모인 Ob를 상속받음
 class SmallCactus(Obstacle):
     def __init__(self, image):
-        #선인장 타입 3개 랜덤
+        #선인장 타입 2개 랜덤
         self.type = random.randint(0, 1)
         super().__init__(image, self.type)
         self.rect.y = 210
@@ -229,6 +230,14 @@ class Bird(Obstacle):
             self.index = 0
         SCREEN.blit(self.imgae[self.index // 5], self.rect)
         self.index += 1
+
+class TopCactus(Obstacle):
+    def __init__(self, image):
+        #선인장 타입 2개 랜덤
+        self.type = random.randint(0, 1)
+        super().__init__(image, self.type)
+        self.rect.y = 0
+
 #아이템
 class Item(Object):
     
@@ -391,6 +400,8 @@ def main():
                 obstacles.append(LargeCactus(LARGE_CACTUS))
             elif random.randint(0, 2) == 2:
                 obstacles.append(Bird(BIRD))
+            elif random.randint(0, 1) == 0:
+                obstacles.append(TopCactus(TOP_CACTUS))
 
         for obstacle in obstacles:
             obstacle.draw(SCREEN)
