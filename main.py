@@ -1,4 +1,4 @@
-import pygame, os, random, time
+import pygame, os, random, time, threading
 #게임 초기화
 pygame.init()
 pygame.mixer.init()
@@ -71,12 +71,22 @@ CHANGE_BTN = [pygame.image.load(os.path.join("Assets/Other", "btn_l.png")),
 
 CHARA_CHANGE = 0
 
-HEART = pygame.image.load(os.path.join("Assets/Item", "heart.png"))
+FULL_HEART = pygame.image.load(os.path.join("Assets/Other", "full_heart.png"))
+EMPTY_HEART = pygame.image.load(os.path.join("Assets/Other", "empty_heart.png"))
+
+COIN = [pygame.image.load(os.path.join("Assets/Other", "coin.png"))]
+SCORE_BOARD = pygame.image.load(os.path.join("Assets/Other", "score.png"))
 item_hit = False
 item2 = False
 #사운드
 JUMP_SOUND = pygame.mixer.Sound('Assets/Sounds/jump.ogg')
 ITEM_SOUND = pygame.mixer.Sound('Assets/Sounds/item.ogg')
+COIN_SOUND = pygame.mixer.Sound('Assets/Sounds/coin.ogg')
+COIN_SOUND.set_volume(0.4)
+DAMAGE_SOUND = pygame.mixer.Sound('Assets/Sounds/damage.ogg')
+DAMAGE_SOUND.set_volume(0.4)
+END_SOUND = pygame.mixer.Sound('Assets/Sounds/end.ogg')
+
 # 공룡동작
 class Dinosaur:
     X_POS = 70
@@ -163,28 +173,10 @@ class Dinosaur:
             #초기화
             self.jump_vel = self.JUMP_VEL
         
-        
-            
     def draw(self, SCREEN):
         SCREEN.blit(self.image, (self.dino_rect.x, self.dino_rect.y))
 
-#구름
-'''class Cloud:
-    def __init__(self):
-        self.x = SCREEN_WIDTH + random.randint(800, 1000)
-        self.y = random.randint(50, 100)
-        self.image = CLOUD
-        self.width = self.image.get_width()
 
-    def update(self):
-        self.x -= game_speed
-        if self.x < -self.width:
-            self.x = SCREEN_WIDTH + random.randint(2500, 3000)
-            self.y = random.randint(50, 100)
-
-    def draw(self, SCREEN):
-        SCREEN.blit(self.image, (self.x, self.y))
-'''
 #장애물, 아이템  부모 클래스 이미지 설정, 이동
 class Object:
     def __init__(self, image, type):
@@ -195,6 +187,8 @@ class Object:
 
     def draw(self, SCREEN):
         SCREEN.blit(self.imgae[self.type], self.rect)
+
+
 #장애물
 class Obstacle(Object):
     def update(self):
@@ -269,6 +263,16 @@ class GameItem2(Item):
         super().__init__(image, self.type)
         self.rect.y = 30
 
+#코인
+class Coin(Object):
+    def __init__(self, image):
+        self.type = 0
+        super().__init__(image, self.type)
+        self.rect.y = 230
+
+    def update(self):
+        self.rect.x -= game_speed
+
 #버튼 클릭 이벤트 클래스
 class Button:
     def __init__(self, img_in, x, y, width, height, action = None):
@@ -299,13 +303,12 @@ def main():
     pygame.mixer.music.set_volume(0.1)
     pygame.mixer.music.play()
     #게임배경음 넣을 곳
-    global game_speed, x_pos_bg, y_pos_bg, points, obstacles, items, count, immortal, item_hit, hearts, hit
+    global game_speed, x_pos_bg, y_pos_bg, points, obstacles, items, count, immortal, item_hit, hearts, hit, coins, c
     immortal = 1
     run = True
     clock = pygame.time.Clock()
     player = Dinosaur()
     game_speed = 14
-    #cloud = Cloud()
     x_pos_bg = 0
     y_pos_bg = 0
     points = 0
@@ -314,10 +317,11 @@ def main():
     obstacles = []
     items = []
     items2 = []
+    coins = []
     death_count = 0
     count = 0
     hit = 1
-
+    c = 0
     #무적 지속 시간
     def ImmotalCount():
         global count, immortal
@@ -347,24 +351,22 @@ def main():
             count += 1
             if count % 50 == 0:
                 hit = 1
-
+    
     def score():
         global points
-        points += 1
-        # antialias True로 하면 폰트가 선명해진다. 
-        text = font.render("Points: " + str(points), True, (255, 255, 255))
-        textRect = text.get_rect()
-        textRect.center = (850, 25)
-        SCREEN.blit(text, textRect)
-
+        text = font.render(str(points), True, (255, 255, 255))
+        #textRect = text.get_rect()
+        #extRect.center = (480, 40)
+        SCREEN.blit(text, (60, 22))
+        SCREEN.blit(COIN[0], (10, 10))
     def heart():
-        global hearts
-        text = font.render("* " + str(hearts), True, (255, 0, 0))
-        textRect = text.get_rect()
-        textRect.center = (880, 60)
-        SCREEN.blit(text, textRect)
-        SCREEN.blit(HEART, (820, 40))
-        
+        for heart in range(3):
+            x = 790 + (heart * 35)
+            if heart < hearts:
+                SCREEN.blit(FULL_HEART, (x, 15))
+            else:
+                SCREEN.blit(EMPTY_HEART,(x, 15))
+            
     def background(image):
         global x_pos_bg, y_pos_bg
         image_width = image.get_width()
@@ -379,6 +381,14 @@ def main():
             x_pos_bg = 0
         # -14로 x측을 계속 뺀다.
         x_pos_bg -= game_speed
+
+    def coinzen():
+        global c
+        c += 1
+        if c % 10 == 0:
+            coins.append(Coin(COIN))
+            c = 0
+        
 
     while run:
         for event in pygame.event.get():
@@ -396,12 +406,12 @@ def main():
         if len(obstacles) == 0:
             if random.randint(0, 2) == 0:
                 obstacles.append(SmallCactus(SMALL_CACTUS))
-            elif random.randint(0, 2) == 1:
-                obstacles.append(LargeCactus(LARGE_CACTUS))
             elif random.randint(0, 2) == 2:
                 obstacles.append(Bird(BIRD))
             elif random.randint(0, 1) == 0:
                 obstacles.append(TopCactus(TOP_CACTUS))
+            elif random.randint(0, 2) == 1:
+                obstacles.append(LargeCactus(LARGE_CACTUS))
 
         for obstacle in obstacles:
             obstacle.draw(SCREEN)
@@ -410,9 +420,11 @@ def main():
                 # 무적아이템과 데미지 입었을때 무적이 되어야하기에 and
                 if immortal and hit:
                     pygame.time.delay(300)
+                    DAMAGE_SOUND.play()
                     hit = 0
                     hearts -= 1
                     if hearts == 0:
+                        END_SOUND.play()
                         death_count += 1
                         menu(death_count)
 
@@ -431,7 +443,19 @@ def main():
                 immortal = 0
                 item_hit = True
                 ITEM_SOUND.play()
-                
+        
+        
+        #코인
+        coinzen()
+
+        #코인 충돌 이벤트
+        for coin in coins:
+            coin.draw(SCREEN)
+            coin.update()
+            if player.dino_rect.colliderect(coin.rect):
+                COIN_SOUND.play()
+                coins.pop(0)
+                points += 10
 
         #마약 아이템
         for item in items2:
@@ -443,7 +467,8 @@ def main():
                 ITEM_SOUND.play()
                 player.draw(SCREEN)
                 pygame.time.delay(300)
-                
+
+        
         score()
         heart()
         damage()
@@ -475,11 +500,11 @@ def menu(death_count):
             chara = MENU_CHARA[0]
         
         if death_count > 0:
-            score = font.render("Your Score : " + str(points), True, (255, 255, 255))
+            score = font.render("SCORE : " + str(points), True, (255, 255, 255))
             scoreRect = score.get_rect()
-            scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 130)
+            scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 145)
+            SCREEN.blit(SCORE_BOARD, (SCREEN_WIDTH // 2 - 170, 10))
             SCREEN.blit(score, scoreRect)
-        
         
         SCREEN.blit(chara, (SCREEN_WIDTH // 2-60, SCREEN_HEIGHT // 2-40))
 
